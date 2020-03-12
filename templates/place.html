@@ -1,0 +1,202 @@
+{% extends'base.html' %}
+{% block head %}
+    <style>
+        #CameraList1{
+            margin-bottom: 0px;
+        }
+
+        #CameraModal .modal-body{
+            padding: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block main %}
+    <nav class="navbar">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <h1>会场管理</h1>
+            </div>
+        </div>
+    </nav>
+    <!-- 会场管理 表格 -->
+    <table class="table" id="place_table">
+        <thead>
+            <tr>
+                <th>会场名称</th>
+                <th>管理会场相机</th>
+            </tr>
+        </thead>
+        <tbody>
+
+           {% for place in places %}
+               <tr>
+                   <td class="place_name">{{ place.name }}</td>
+                   <td><button id="CallCamera1" class="glyphicon glyphicon-facetime-video" aria-hidden="true" data-toggle="modal" data-target="#CameraModal"></button></td>
+               </tr>
+           {% endfor %}
+        </tbody>
+    </table>
+
+
+    <!-- 管理会场相机 Modal-->
+    <div class="modal bs-example-modal-lg" id="CameraModal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+      <div class="modal-dialog modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">管理会场相机</h4>
+                <h5 class="place_title"></h5>
+            </div>
+            <div class="modal-body">
+                <table class="table" id="CameraList1">
+                    <thead>
+                        <tr>
+                            <th>相机名称</th>
+                            <th>IP</th>
+                            <th>测试相机</th>
+                            <th>编辑相机</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+            </div>
+          </div>
+      </div>
+    </div>
+
+
+        <!-- 管理会场相机 - 编辑相机信息 Modal -->
+    <div class="modal bs-example-modal-sm" id="EditCamera" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
+      <div class="modal-dialog modal-sm" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">编辑相机信息</h4>
+            </div>
+            <div class="modal-body">
+                <form id="CameraInfoForm">
+                    <div class="form-group">
+                        <label for="InputCameraName">相机名称</label>
+                        <input type="text" class="form-control" id="InputCameraName" required/>
+                    </div>
+                    <div class="form-group">
+                        <label for="InputCameraIP">相机IP</label>
+                        <input type="text" class="form-control" id="InputCameraIP" required/>
+                    </div>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary" id="SubmitCameraInfo">提交</button>
+                </form>
+            </div>
+          </div>
+      </div>
+    </div>
+
+
+
+{% endblock %}
+
+{% block script %}
+    <script>
+        {# 点击会场列表 #}
+        $( "#place_table tbody" ).on( "click", "tr", function() {
+        {# 子标题(place_title类)为点击行的名称 #}
+            var place = $(this).text().trim();
+            $(".place_title").text(place);
+
+
+            {# 管理会场相机窗口 #}
+            var cameras = post_info(place,'/'); //从服务器获取会场的相机
+            cameras = JSON.parse(cameras);
+
+            var num = cameras.name.length;
+            var content;
+            for (var i=0;i<num;i++){
+
+                content += '<tr>' +
+                    '<td>'+ cameras.name[i] + '</td>' +
+                    '<td>'+cameras.ip[i] + '</td>' +
+                    '<td><button class="glyphicon glyphicon-facetime-video"></button></td>' +
+                    '<td><button class="glyphicon glyphicon-pencil" aria-hidden="true" data-toggle="modal" data-target="#EditCamera"></button></td><tr>'
+            } // 将每个相机的信息写入 #camera_list 的tbody里
+            var camera_list_table = $('#CameraList1 tbody');
+            camera_list_table.html(content);
+
+                {# 编辑相机信息 #}
+            camera_list_table.on('click', 'tr',function () {
+                var camera_name = $(this.children[0]).text();
+                var camera_ip = $(this.children[1]).text();
+
+                var InputCameraIP = $('#InputCameraIP');
+                var InputCameraName = $('#InputCameraName');
+                InputCameraName.attr("placeholder",camera_name);
+                InputCameraIP.attr("placeholder",camera_ip);
+                InputCameraIP.inputmask({
+                    alias:"ip",
+                    greedy: false
+                });
+
+                InputCameraName.focus(function () {
+                   InputCameraName.val(camera_name)
+                });
+                InputCameraIP.focus(function () {
+                   InputCameraIP.val(camera_ip)
+                });
+
+
+
+                {# 提交相机信息#}
+                $('#CameraInfoForm').on('submit', function (e) {
+                    $(this).submit(function () {
+                        return false
+                    });
+                    if (InputCameraName.val()===camera_name && InputCameraIP.val()===camera_ip){
+                        alert('相机信息不变。');
+                        return true
+                    }
+
+                    var info ='1';
+                    if (InputCameraName.val()===camera_name){
+                        info = '0'
+                    }
+                    if (InputCameraIP.val()===camera_ip){
+                        info += '$0$0$'
+                    } else {
+                        info += '$1$0$'
+                    }
+
+                    info += camera_ip + '$' + InputCameraName.val()+ '$' +InputCameraIP.val() + '$ ';
+                    var check = post_info(info,'/check_camera_info');
+                    if (check === 'name'){
+                        alert('名称已被使用，请更换相机名称');
+                        e.preventDefault();
+                    } else if (check === 'ip'){
+                        alert('IP已被使用，请更换相机IP');
+                        e.preventDefault();
+                    } else if (check === 'success'){
+                        var change = post_info(info,'/change_camera_info');
+                        if (change ==='success'){
+                            alert('修改成功，页面即将刷新');
+                            location.reload()
+                        } else {
+                            alert('change_camera_info 返回了failed')
+                        }
+
+                    } else {
+                        alert('check_camera_info 返回了zero')
+                    }
+                    return true;
+                })
+            });
+
+        });
+
+    </script>
+
+{% endblock %}
