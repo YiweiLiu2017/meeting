@@ -25,6 +25,7 @@
             <tr>
                 <th>会场名称</th>
                 <th>管理会场相机</th>
+                <th>修改会场信息</th>
             </tr>
         </thead>
         <tbody>
@@ -32,7 +33,8 @@
            {% for place in places %}
                <tr>
                    <td class="place_name">{{ place.name }}</td>
-                   <td><button id="CallCamera1" class="glyphicon glyphicon-facetime-video" aria-hidden="true" data-toggle="modal" data-target="#CameraModal"></button></td>
+                   <td><button class="glyphicon glyphicon-facetime-video" aria-hidden="true" data-toggle="modal" data-target="#CameraModal"></button></td>
+                   <td><button class="glyphicon glyphicon-pencil" aria-hidden="true" data-toggle="modal" data-target="#EditPlaceModal"></button></td>
                </tr>
            {% endfor %}
         </tbody>
@@ -70,8 +72,6 @@
           </div>
       </div>
     </div>
-
-
         <!-- 管理会场相机 - 编辑相机信息 Modal -->
     <div class="modal bs-example-modal-sm" id="EditCamera" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
       <div class="modal-dialog modal-sm" role="document">
@@ -98,6 +98,31 @@
       </div>
     </div>
 
+    <!-- 修改会场信息 （改名&删除会场功能）-->
+    <div class="modal bs-example-modal-sm" id="EditPlaceModal" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
+      <div class="modal-dialog modal-sm" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">修改会场信息</h4>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('test') }}" method="post">
+                    <div class="form-group">
+                        <label for="InputPlaceName">会场名称</label>
+                        <input type="text" class="form-control" id="InputPlaceName" required/>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-danger" id="DeletePlaceButton">删除会场</button>
+                    </div>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary" id="SubmitPlaceInfo">提交</button>
+                </form>
+            </div>
+          </div>
+      </div>
+    </div>
+
 
 
 {% endblock %}
@@ -107,11 +132,13 @@
         {# 点击会场列表 #}
         $( "#place_table tbody" ).on( "click", "tr", function() {
         {# 子标题(place_title类)为点击行的名称 #}
+
             var place = $(this).text().trim();
             $(".place_title").text(place);
 
 
             {# 管理会场相机窗口 #}
+
             var cameras = post_info(place,'/'); //从服务器获取会场的相机
             cameras = JSON.parse(cameras);
 
@@ -194,6 +221,13 @@
                     return true;
                 })
             });
+
+            {#删除会场#}
+            var InputPlaceName = $('#InputPlaceName');
+            InputPlaceName.attr('placeholder', place);
+            InputPlaceName.focus(function () {
+                InputPlaceName.val(place);
+            })
 
         });
 
