@@ -101,12 +101,26 @@ def create_camera():
     return 'failed'
 
 
-@app.route('/camera')
+@app.route('/camera', methods=['get','post'])
 def camera():
     # 从数据库读取所有的相机信息
     cameras = Camera.query.order_by(Camera.id).all()
-
+    if request.method == 'POST':
+        print('post')
     return render_template('camera.html', cameras=cameras)
+
+
+@app.route('/delete_camera', methods=['POST'])
+def delete_camera():
+    # 获取需要删除的相机id
+    if request.method == 'POST':
+        ip = json.loads(request.get_data())
+        camera = db.session.query(Camera).filter_by(ip=ip).first()
+        db.session.delete(camera)
+        db.session.commit()
+        return 'success'
+
+    return 'failed'
 
 
 if __name__ == '__main__':
