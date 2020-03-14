@@ -125,6 +125,8 @@ def delete_camera():
 
 @app.route('/test', methods=['POST'])
 def test():
+    if request.method == 'POST':
+        print(json.loads(request.get_data()))
     return 'test'
 
 
