@@ -78,9 +78,10 @@ def check_camera_info():
 @app.route('/change_camera_info',methods=['POST'])
 def change_camera_info():
     if request.method == 'POST':
-
         info = json.loads(request.get_data())
         info = info.split('$')
+
+        # 如果info开头为2，则更改会场名
         # [2, place, InputPlaceName]
         place = db.session.query(Place).filter_by(name=info[1]).first()
         if info[0] == '2':
@@ -92,14 +93,33 @@ def change_camera_info():
             db.session.remove()
             return 'success'
 
-        camera = db.session.query(Camera).filter_by(ip=info[3]).first()
-        # 同理，如果1则为有变动，当即修改，如果为0则不用管
+        # 如果info开头为0或1，则更改相机信息
+        # 如果1则为有变动，当即修改，如果为0说明这个信息没变，不用管
         if info[0] == '1':
+            camera = db.session.query(Camera).filter_by(ip=info[3]).first()
             camera.name = info[4]
-        if info[1] == '1':
-            camera.ip = info[5]
-        if info[2] == '1':
-            camera.place_name = info[6]
+            if info[1] == '1':
+                camera.ip = info[5]
+            if info[2] == '1':
+                camera.place_name = info[6]
+
+        # 如果info开头为3，则删除会场，并更改或者删除会场下的相机信息, info构成为[3, 0/1, place]
+        if info[0] == '3': # 删除会场
+            place = db.session.query(Place).filter_by(name=info[2]).first()
+            db.session.delete(place)
+            cameras = db.session.query(Camera).filter_by(place_name=info[2]).all()
+            if info[1] == '1':  #删除相机
+                for camera in cameras:
+                    db.session.delete(camera)
+                db.session.commit()
+                db.session.remove()
+                return 'clear'
+            if info[1] == '0': # 删除会场, 相机所属场地变为无
+                for camera in cameras:
+                    camera.place_name = "无"
+                db.session.commit()
+                db.session.remove()
+                return 'deleted'
 
         db.session.commit()
         db.session.remove()
@@ -136,8 +156,8 @@ def delete_camera():
     if request.method == 'POST':
         ip = json.loads(request.get_data())
         camera = db.session.query(Camera).filter_by(ip=ip).first()
-        db.session.delete(camera)
-        db.session.commit()
+        # db.session.delete(camera)
+        # db.session.commit()
         return 'success'
 
     return 'failed'

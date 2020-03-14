@@ -7,7 +7,7 @@ function post_info(info, url) {
     var method = "POST";
     url =url + "?time=" + new Date();
 
-    request.open(method, url, false);
+    request.open(method, url, true);
     request.setRequestHeader('Content-type','application/x-www-form-urlencoded');
 
     request.send(info);

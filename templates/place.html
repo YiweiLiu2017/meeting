@@ -11,6 +11,9 @@
         #DeletePlaceModal form{
             margin: 20px;
         }
+        #DeletePlaceModal .radio-group{
+            margin-bottom: 30px;
+        }
     </style>
 {% endblock %}
 
@@ -29,6 +32,7 @@
                 <th>会场名称</th>
                 <th>管理会场相机</th>
                 <th>修改会场信息</th>
+                <th>删除会场</th>
             </tr>
         </thead>
         <tbody>
@@ -38,6 +42,7 @@
                    <td class="place_name">{{ place.name }}</td>
                    <td><button class="glyphicon glyphicon-facetime-video" aria-hidden="true" data-toggle="modal" data-target="#CameraModal"></button></td>
                    <td><button class="glyphicon glyphicon-pencil" aria-hidden="true" data-toggle="modal" data-target="#EditPlaceModal"></button></td>
+                   <td><button class="glyphicon glyphicon-trash" aria-hidden="true" data-toggle="modal" data-target="#DeletePlaceModal"></button></td>
                </tr>
            {% endfor %}
         </tbody>
@@ -115,11 +120,8 @@
                         <label for="InputPlaceName">会场名称</label>
                         <input type="text" class="form-control" id="InputPlaceName" name="PlaceName" required/>
                     </div>
-                    <div class="form-group">
-                        <button type="button" class="btn btn-danger" id="DeletePlaceButton" aria-hidden="true" data-toggle="modal" data-target="#DeletePlaceModal">删除会场</button>
-                    </div>
                     <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="submit" class="btn btn-primary" id="SubmitPlaceInfo">提交</button>
+                    <button type="submit" class="btn btn-primary">提交</button>
                 </form>
             </div>
           </div>
@@ -136,14 +138,16 @@
             </div>
             <div class="model-body">
                 <form >
-                    <label class="radio-inline">
-                    <input type="radio" name="DeletePlace" id="DeletePlaceCamera" value="1"> 删除会场且删除所有相机
-                    </label><br>
-                    <label class="radio-inline">
-                    <input type="radio" name="DeletePlace" id="KeepPlaceCamera" value="0"> 删除会场，但保留相机
-                    </label><br>
+                    <div class="radio-group">
+                        <label class="radio-inline">
+                        <input type="radio" name="DeletePlace" value="1"> 删除会场且删除所有相机
+                        </label><br>
+                        <label class="radio-inline">
+                        <input type="radio" name="DeletePlace" value="0"> 删除会场，但保留相机
+                        </label><br>
+                    </div>
                     <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="submit" class="btn btn-primary" id="DeletePlaceInfo">提交</button>
+                    <button type="submit" class="btn btn-primary">提交</button>
                 </form>
             </div>
           </div>
@@ -277,7 +281,29 @@
                 }
 
             });
+
+
         });
+        $( ".glyphicon-trash").on( "click", function() {
+            var place = $(this).parent().siblings(":first").text().trim();
+
+            {#提交删除会场表格#}
+            $("#DeletePlaceModal form").on('submit', function (e) {
+                e.preventDefault();
+                var info = '3$' + $("input[name='DeletePlace']:checked").val() + '$'+ place;
+                var deleteInfo = post_info(info, '/change_camera_info');
+                if (deleteInfo === 'clear'){
+                    alert('会场删除完毕，相机删除完毕');
+                    location.reload();
+                }
+                if (deleteInfo === 'deleted'){
+                    alert('会场删除完毕，原会场相机的所属场地为"无"')
+                    location.reload();
+                }
+            })
+        });
+
+
     </script>
 
 {% endblock %}

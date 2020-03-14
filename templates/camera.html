@@ -32,7 +32,7 @@
                        <td class="camera_place">{{ camera.place_name }}</td>
                        <td><button class="glyphicon glyphicon-facetime-video" aria-hidden="true" data-toggle="modal" data-target="#"></button></td>
                        <td><button class="glyphicon glyphicon-pencil" aria-hidden="true" data-toggle="modal" data-target="#EditCameraModal"></button></td>
-                       <td><button class="glyphicon glyphicon-trash" aria-hidden="true" data-toggle="modal" data-target="#DeleteWarningModal"></button></td>
+                       <td><button class="glyphicon glyphicon-trash" aria-hidden="true" data-toggle="modal" data-target="#DeleteCameraModal"></button></td>
                    </tr>
                {% endfor %}
             </tbody>
@@ -101,7 +101,7 @@
     </div>
 
     <!-- 删除相机 弹出窗 -->
-    <div class="modal bs-example-modal-sm" id="DeleteWarningModal" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
+    <div class="modal bs-example-modal-sm" id="DeleteCameraModal" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
       <div class="modal-dialog modal-sm" role="document">
           <div class="modal-content">
             <div class="modal-header">
@@ -111,10 +111,9 @@
             <div class="modal-body">
                 <form action="">
                     <div class="form-group">
-                        您确定要删除该相机吗？
                     </div>
                     <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="submit" class="btn btn-primary" id="ConfirmDeleteButton">确定</button>
+                    <button type="submit" class="btn btn-primary">确定</button>
                 </form>
             </div>
 
@@ -128,27 +127,27 @@
 {% block script %}
     <script>
         {# 修改相机信息、删除相机 #}
-        $('#CameraList2 tbody').on('click', 'tr', function () {
+        $('.glyphicon-pencil').on('click', function () {
             {#点击某列任一按钮，获得该列相机名、ip、会场#}
-            var camera_name = $(this.children[0]).text();
-            var camera_ip = $(this.children[1]).text();
-            var camera_place = $(this.children[2]).text();
+            var camera_name = $(this).parent().siblings(":first").text().trim();
+            var camera_ip = $(this).parent().siblings(":nth-of-type(2)").text().trim();
+            var camera_place = $(this).parent().siblings(":nth-of-type(3)").text().trim();
 
             {#修改相机信息#}
-                {#将三个输入框分别起名为InputCameraIP, InputCameraName, InputCameraPlace#}
+            {#将三个输入框分别起名为InputCameraIP, InputCameraName, InputCameraPlace#}
             var InputCameraIP = $('#InputCameraIP2');
             var InputCameraName = $('#InputCameraName2');
             var InputCameraPlace = $('#InputCameraPlace2');
-                {#开始时三个输入框内容默认为已有的相机名、ip、会场#}
+            {#开始时三个输入框内容默认为已有的相机名、ip、会场#}
             InputCameraName.attr("placeholder", camera_name);
             InputCameraPlace.attr("placeholder", camera_place);
             InputCameraIP.attr("placeholder", camera_ip);
-                {#IP的输入框强制为ip格式#}
+            {#IP的输入框强制为ip格式#}
             InputCameraIP.inputmask({
                 alias: "ip",
                 greedy: false
             });
-                {#点击输入框，默认为原本的名字#}
+            {#点击输入框，默认为原本的名字#}
             InputCameraName.focus(function () {
                 InputCameraName.val(camera_name)
             });
@@ -158,7 +157,7 @@
             InputCameraPlace.focus(function () {
                 InputCameraPlace.val(camera_place)
             });
-                {#填写完信息后提交表单#}
+            {#填写完信息后提交表单#}
             $('#CameraInfoForm2').on('submit', function (e) {
                 {#防止重复提交#}
                 $(this).submit(function () {
@@ -217,24 +216,31 @@
                         }
                         break;
                     default:
-                            alert('check_camera_info 返回了zero')
-                return true;
+                        alert('check_camera_info 返回了zero')
+                        return true;
                 }
             });
+        });
+
+        {#删除相机#}
+        {#传递相机信息，等待delete_camera函数返回删除状态#}
+        $('.glyphicon-trash').on('click',function () {
+            var camera_ip = $(this).parent().siblings(":nth-of-type(2)").text().trim();
+            var camera_name = $(this).parent().siblings(":first").text().trim();
+            $('#DeleteCameraModal .form-group').text('您确定要删除 ' + camera_name + ' 吗？');
 
 
-            {#删除相机#}
-                {#传递相机信息，等待delete_camera函数返回删除状态#}
-            $('#ConfirmDeleteButton').on('click',function () {
-                 var delete_result = post_info(camera_ip,'/delete_camera');
-                 if (delete_result === 'success'){
-                     alert("相机 " + camera_name + " 已成功删除");
-                 }
-                 if (delete_result === 'failed'){
-                     alert("相机删除失败");
-                 }
+            $('#DeleteCameraModal form').on('submit',function (e) {
+                e.preventDefault();
+                var delete_result = post_info(camera_ip,'/delete_camera');
+                if (delete_result === 'success'){
+                 alert("相机 " + camera_name + " 已成功删除");
+                }
+                if (delete_result === 'failed'){
+                 alert("相机删除失败");
+                }
+                return true;
             });
-
         });
         {# 创建相机 #}
         $('#CreateCameraButton').on('click', function () {
@@ -247,7 +253,7 @@
                 $(this).submit(function () {
                     return false;
                 });
-                var info = '1$1$1$ $'
+                var info = '1$1$1$ $';
                 info += $('#InputCameraName3').val() + '$' +
                     $('#InputCameraIP3').val() + '$' +
                     $('#InputCameraPlace3').val();
