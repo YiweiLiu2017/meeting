@@ -20,18 +20,20 @@ def place():
         name = json.loads(request.get_data())
         name = name.strip()
         place = Place.query.filter_by(name=name).first()
-# question??
+        cameras = Camera.query.filter_by(place_name=place.name).all()
         db.session.remove()
         # 给定相机list，相机名字的list叫cameras_name，相机ip的list叫cameras_ip
         cameras_name = []
         cameras_ip = []
-        for camera in place.cameras:
+        for camera in cameras:
             cameras_name.append(camera.name)
             cameras_ip.append(camera.ip)
 
         cameras = {'name': cameras_name, 'ip': cameras_ip}
-        return json.dumps(cameras)
+        db.session.remove()
 
+        return json.dumps(cameras)
+    db.session.remove()
     return render_template('place.html', places=places)
 
 
@@ -39,12 +41,19 @@ def place():
 def check_camera_info():
     # 如果要求验证新建的或更改的相机信息是否合法:
     if request.method == 'POST':
+        info = json.loads(request.get_data())
+        info = info.split('$')
+
+        check_place_name = None
+        if info[0]=='2':
+            check_place_name = Place.query.filter_by(name=info[2]).first()
+        if check_place_name is not None:
+            return 'occupied'
+
         check_name = None
         check_ip = None
         check_place = 0
 
-        info = json.loads(request.get_data())
-        info = info.split('$')
         # 回传信息的构成举例：'1$1$1$camera_ip$camera_name$camera_ip$camera_place'
         # 1代表修改过，所以需要检查，0代表不变，不用检查
         # [0name,1ip,2place, 3camera current ip, 4camera (new) name, 5camera (new) ip, 6camera new place]
@@ -72,6 +81,16 @@ def change_camera_info():
 
         info = json.loads(request.get_data())
         info = info.split('$')
+        # [2, place, InputPlaceName]
+        place = db.session.query(Place).filter_by(name=info[1]).first()
+        if info[0] == '2':
+            cameras = db.session.query(Camera).filter_by(place_name=info[1]).all()
+            for camera in cameras:
+                camera.place_name = info[2]
+            place.name = info[2]
+            db.session.commit()
+            db.session.remove()
+            return 'success'
 
         camera = db.session.query(Camera).filter_by(ip=info[3]).first()
         # 同理，如果1则为有变动，当即修改，如果为0则不用管
@@ -83,6 +102,7 @@ def change_camera_info():
             camera.place_name = info[6]
 
         db.session.commit()
+        db.session.remove()
         return 'success'
     return 'failed'
 
@@ -126,8 +146,9 @@ def delete_camera():
 @app.route('/test', methods=['POST'])
 def test():
     if request.method == 'POST':
-        print(json.loads(request.get_data()))
-    return 'test'
+        data = request.get_data()
+        print(data)
+    return 'success'
 
 
 if __name__ == '__main__':

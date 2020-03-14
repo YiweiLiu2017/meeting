@@ -47,7 +47,8 @@ def wash_camera_name():
 
 
 with app.app_context():
-    db.create_all() # 前三个函数在创建数据完之后就能注释掉了
+    # db.create_all()
+    # db.drop_all()# 前三个函数在创建数据完之后就能注释掉了
     create_meeting_room()
     create_camera()
     # wash_camera_ip()

@@ -110,10 +110,10 @@
                 <h4 class="modal-title">修改会场信息</h4>
             </div>
             <div class="modal-body">
-                <form action="{{ url_for('test') }}" method="post">
+                <form action="#">
                     <div class="form-group">
                         <label for="InputPlaceName">会场名称</label>
-                        <input type="text" class="form-control" id="InputPlaceName" required/>
+                        <input type="text" class="form-control" id="InputPlaceName" name="PlaceName" required/>
                     </div>
                     <div class="form-group">
                         <button type="button" class="btn btn-danger" id="DeletePlaceButton" aria-hidden="true" data-toggle="modal" data-target="#DeletePlaceModal">删除会场</button>
@@ -135,7 +135,7 @@
                 <h4 class="modal-title">删除会场</h4>
             </div>
             <div class="model-body">
-                <form action="{{ url_for('test') }}" method="post">
+                <form >
                     <label class="radio-inline">
                     <input type="radio" name="DeletePlace" id="DeletePlaceCamera" value="1"> 删除会场且删除所有相机
                     </label><br>
@@ -143,7 +143,7 @@
                     <input type="radio" name="DeletePlace" id="KeepPlaceCamera" value="0"> 删除会场，但保留相机
                     </label><br>
                     <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                    <button type="submit" class="btn btn-primary" id="SubmitPlaceInfo">提交</button>
+                    <button type="submit" class="btn btn-primary" id="DeletePlaceInfo">提交</button>
                 </form>
             </div>
           </div>
@@ -156,11 +156,9 @@
 
 {% block script %}
     <script>
-        $( "#place_table tbody button").on( "click", function() {
-            {#获取该行会场名#}
+        $(".glyphicon-facetime-video").on("click",function () {
             var place = $(this).parent().siblings(":first").text().trim();
             $(".place_title").text(place);
-
             {# 载入会场的相机们 #}
             var cameras = post_info(place,'/'); //从服务器获取会场的相机
             cameras = JSON.parse(cameras);
@@ -245,15 +243,41 @@
                     return true;
                 })
             });
+        });
+
+
+        var InputPlaceName = $('#InputPlaceName');
+        $( ".glyphicon-pencil").on( "click", function() {
+            {#获取该行会场名#}
+            var place = $(this).parent().siblings(":first").text().trim();
 
             {#编辑会场#}
-            var InputPlaceName = $('#InputPlaceName');
             InputPlaceName.attr('placeholder', place);
             InputPlaceName.focus(function () {
                 InputPlaceName.val(place);
-            })
-        });
+            });
 
+            {#提交编辑会场表格#}
+            $("#EditPlaceModal form").on('submit',function (e) {
+                e.preventDefault();
+                var info = '2$' + place + '$' + InputPlaceName.val();
+                var test = post_info(info,'/check_camera_info');
+                if(test === 'occupied'){
+                    alert('会场名称已被使用，请更换');
+                }
+                if(test === 'success'){
+                    var change = post_info(info,'change_camera_info');
+                    if (change === 'success'){
+                        alert('会场名更改成功');
+                        location.reload();
+                    }
+                    else{
+                        alert('出错啦');
+                    }
+                }
+
+            });
+        });
     </script>
 
 {% endblock %}
